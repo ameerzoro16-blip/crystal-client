@@ -85,7 +85,7 @@ class ListenerController {
         var coffFile: File? = null
         val coffLabel = Label("no file selected").apply { styleClass.add("card-coff") }
         val browseBtn = Button("Browse…").apply {
-            styleClass.add("scripts-load-btn")
+            styleClass.add("btn")
             setOnAction {
                 val chooser = FileChooser().apply {
                     title = "Select UDC2 Library"

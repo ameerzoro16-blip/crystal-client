@@ -6,14 +6,20 @@ import crystalpalace.spec.LinkSpec
 import io.grpc.stub.StreamObserver
 import javafx.application.Platform
 import javafx.fxml.FXML
+import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ComboBox
+import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.scene.control.ListCell
+import javafx.scene.control.TextArea
 import javafx.scene.control.TextField
+import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
+import javafx.stage.Stage
 import java.io.File
 import javafx.util.StringConverter
 import listeners.Listeners.ListenerEvent
@@ -26,6 +32,7 @@ class PayloadController {
     @FXML private lateinit var buildButton: Button
     @FXML private lateinit var listenerCombo: ComboBox<ListenerInfo>
     @FXML private lateinit var archCheck: CheckBox
+    @FXML private lateinit var yaraCheck: CheckBox
     @FXML private lateinit var sleepField: TextField
     @FXML private lateinit var jitterField: TextField
     @FXML private lateinit var extensionsBox: VBox
@@ -135,7 +142,7 @@ class PayloadController {
 
             params["%EXTENSION"] = extensions.joinToString(",")
 
-            val payload = spec.run(cap, params)
+            val result = spec.runAndGenerate(cap, params)
 
             val file = FileChooser().apply {
                 title = "Save Payload"
@@ -146,7 +153,44 @@ class PayloadController {
                 )
             }.showSaveDialog(buildButton.scene.window) ?: return
 
-            file.writeBytes(payload)
+            file.writeBytes(result.program)
+
+            if (yaraCheck.isSelected) {
+                val rulesText = String(result.rules)
+                val textArea = TextArea(rulesText).apply {
+                    isEditable = false
+                    VBox.setVgrow(this, Priority.ALWAYS)
+                    style = "-fx-font-family: monospace;"
+                }
+                val saveBtn = Button("Save Rules").apply {
+                    styleClass.add("btn")
+                    setOnAction {
+                        val dest = FileChooser().apply {
+                            title = "Save YARA Rules"
+                            initialFileName = "beacon.${if (archCheck.isSelected) "x64" else "x86"}.yar"
+                            extensionFilters.addAll(
+                                FileChooser.ExtensionFilter("YARA Files", "*.yar", "*.yara"),
+                                FileChooser.ExtensionFilter("All Files", "*.*")
+                            )
+                        }.showSaveDialog(this.scene.window) ?: return@setOnAction
+                        dest.writeText(rulesText)
+                    }
+                }
+                val toolbar = HBox(saveBtn).apply {
+                    padding = Insets(6.0, 8.0, 6.0, 8.0)
+                    style = "-fx-background-color: #2d2d2d;"
+                }
+                Stage().apply {
+                    title = "YARA Rules"
+                    scene = Scene(
+                        VBox(toolbar, textArea)
+                    ).also {
+                        it.stylesheets.add(CrystalC2.getResource("styles.css")!!.toExternalForm())
+                    }
+                    show()
+                }
+            }
+
         } catch (exception: Exception) {
             print(exception.message)
         }

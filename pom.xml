@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.crystalc2</groupId>
   <artifactId>client</artifactId>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
   <name>client</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
